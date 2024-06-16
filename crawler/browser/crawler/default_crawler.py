@@ -1,8 +1,15 @@
 from abc import ABC, abstractmethod
+from webbrowser import GenericBrowser
+
+from crawler.browser.tools.mongo import MongoConnection
+from crawler.browser.tools.redis import RedisClient
+
 
 class AbstractCrawler(ABC):
     def __init__(self):
-        pass
+        self.redis = RedisClient.get()
+        self.mongo = MongoConnection()
+        self.browser = GenericBrowser.get_browser()
 
     @abstractmethod
     def crawl(self):
@@ -21,9 +28,17 @@ class AbstractCrawler(ABC):
         pass
 
     @abstractmethod
-    def get_steps(self):
+    def extraction(self):
         pass
 
-    @abstractmethod
-    def save_data(self):
-        pass
+    def get_steps(self, site):
+        try:
+            return self.redis.get(site)
+        except:
+            raise("Redis não funcionou")
+
+    def save_data(self, data):
+        try:
+            self.mongo.save_dataframe(data)
+        except:
+            raise("Mongo não funcionou")
